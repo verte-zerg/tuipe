@@ -131,6 +131,11 @@ func RenderSummary(w io.Writer, sessions []model.SessionAggregate) error {
 
 // RenderCurves prints learning curves for WPM and accuracy.
 func RenderCurves(w io.Writer, sessions []model.SessionAggregate, window int) error {
+	return RenderCurvesWithSize(w, sessions, window, 0, 10, false)
+}
+
+// RenderCurvesWithSize prints learning curves sized to a given total width.
+func RenderCurvesWithSize(w io.Writer, sessions []model.SessionAggregate, window, totalWidth, height int, useColor bool) error {
 	if len(sessions) == 0 {
 		return nil
 	}
@@ -144,10 +149,14 @@ func RenderCurves(w io.Writer, sessions []model.SessionAggregate, window int) er
 	wpms = MovingAverage(wpms, window)
 	accs = MovingAverage(accs, window)
 
-	return PlotSeries(w, "Learning Curves", []Series{
+	width := 0
+	if totalWidth > 0 {
+		width = PlotWidthFor(totalWidth)
+	}
+	return PlotSeriesWithColor(w, "Learning Curves", []Series{
 		{Name: "WPM", Values: wpms},
 		{Name: "Accuracy", Values: accs},
-	}, 0, 10)
+	}, width, height, useColor)
 }
 
 // RenderCharTable prints per-character aggregates.
@@ -224,6 +233,11 @@ func RenderCharTable(w io.Writer, aggs []model.CharAggregate) error {
 
 // RenderCharCurves prints per-character learning curves.
 func RenderCharCurves(w io.Writer, sessions []model.SessionAggregate, perSession map[int64]map[string]model.CharAggregate, chars []string, window int) error {
+	return RenderCharCurvesWithSize(w, sessions, perSession, chars, window, 0, 10, false)
+}
+
+// RenderCharCurvesWithSize prints per-character learning curves sized to a given total width.
+func RenderCharCurvesWithSize(w io.Writer, sessions []model.SessionAggregate, perSession map[int64]map[string]model.CharAggregate, chars []string, window, totalWidth, height int, useColor bool) error {
 	if len(chars) == 0 || len(sessions) == 0 {
 		return nil
 	}
@@ -248,10 +262,14 @@ func RenderCharCurves(w io.Writer, sessions []model.SessionAggregate, perSession
 		}
 		accSeries = MovingAverage(accSeries, window)
 		latSeries = MovingAverage(latSeries, window)
-		if err := PlotSeries(w, fmt.Sprintf("Char %s", ch), []Series{
+		width := 0
+		if totalWidth > 0 {
+			width = PlotWidthFor(totalWidth)
+		}
+		if err := PlotSeriesWithColor(w, fmt.Sprintf("Char %s", ch), []Series{
 			{Name: "Accuracy", Values: accSeries},
 			{Name: "Latency", Values: latSeries},
-		}, 0, 10); err != nil {
+		}, width, height, useColor); err != nil {
 			return err
 		}
 	}

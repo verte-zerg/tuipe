@@ -7,6 +7,7 @@ import (
 	"math"
 	"os"
 	"strings"
+	"unicode/utf8"
 
 	"golang.org/x/term"
 )
@@ -62,6 +63,15 @@ var colorPalette = []ansiColor{
 
 // PlotSeries renders a multi-line text plot for the provided series.
 func PlotSeries(w io.Writer, title string, series []Series, width, height int) error {
+	return plotSeries(w, title, series, width, height, false)
+}
+
+// PlotSeriesWithColor renders a multi-line text plot with optional forced color output.
+func PlotSeriesWithColor(w io.Writer, title string, series []Series, width, height int, forceColor bool) error {
+	return plotSeries(w, title, series, width, height, forceColor)
+}
+
+func plotSeries(w io.Writer, title string, series []Series, width, height int, forceColor bool) error {
 	series = filterSeries(series)
 	if len(series) == 0 {
 		return nil
@@ -136,7 +146,7 @@ func PlotSeries(w io.Writer, title string, series []Series, width, height int) e
 		}
 	}
 
-	useColor := shouldUseColor(w)
+	useColor := shouldUseColor(w, forceColor)
 	leftAxisWidth := len(axisLabelTop)
 	axisLabels := makeAxisLabels(height)
 
@@ -204,11 +214,21 @@ func maxSeriesLen(series []Series) int {
 }
 
 func autoPlotWidth() int {
-	width := terminalWidth()
-	axisWidth := len(axisLabelTop) + len(axisSeparator)
-	plotWidth := width - axisWidth
+	return PlotWidthFor(terminalWidth())
+}
+
+// PlotWidthFor computes a plot width that fits within the total available width.
+func PlotWidthFor(totalWidth int) int {
+	if totalWidth <= 0 {
+		return minPlotWidth
+	}
+	axisWidth := utf8.RuneCountInString(axisLabelTop) + utf8.RuneCountInString(axisSeparator)
+	plotWidth := totalWidth - axisWidth
 	if plotWidth < minPlotWidth {
 		plotWidth = minPlotWidth
+	}
+	if plotWidth < 1 {
+		plotWidth = 1
 	}
 	return plotWidth
 }
@@ -221,9 +241,12 @@ func terminalWidth() int {
 	return width
 }
 
-func shouldUseColor(w io.Writer) bool {
+func shouldUseColor(w io.Writer, force bool) bool {
 	if os.Getenv("NO_COLOR") != "" {
 		return false
+	}
+	if force {
+		return true
 	}
 	file, ok := w.(*os.File)
 	if !ok {

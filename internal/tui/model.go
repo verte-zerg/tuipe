@@ -65,7 +65,7 @@ var (
 	incorrectStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF4D4F"))
 	pendingStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#8C8C8C"))
 	currentWordStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#C89A3A"))
-	cursorStyle      = pendingStyle.Copy().Underline(true)
+	cursorStyle      = pendingStyle.Underline(true)
 	footerStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("#6E6E6E"))
 )
 

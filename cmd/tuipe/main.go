@@ -19,6 +19,7 @@ import (
 	"github.com/verte-zerg/tuipe/internal/generator"
 	"github.com/verte-zerg/tuipe/internal/model"
 	"github.com/verte-zerg/tuipe/internal/stats"
+	"github.com/verte-zerg/tuipe/internal/statsui"
 	"github.com/verte-zerg/tuipe/internal/store"
 	"github.com/verte-zerg/tuipe/internal/tui"
 	"github.com/verte-zerg/tuipe/internal/wordfreq"
@@ -27,7 +28,7 @@ import (
 
 const (
 	defaultLang        = "en"
-	defaultWords       = 50
+	defaultWords       = 25
 	defaultCaps        = 0.5
 	defaultPunct       = 0.5
 	defaultWeakTop     = 8
@@ -299,40 +300,10 @@ func runStatsCmd(_ *cobra.Command, _ []string) error {
 		}
 	}()
 
-	sessions, err := st.ListSessions(context.Background(), cfg)
-	if err != nil {
-		return fmt.Errorf("failed to load sessions: %w", err)
-	}
-
-	if cfg.Last > 0 && len(sessions) > cfg.Last {
-		sessions = sessions[len(sessions)-cfg.Last:]
-	}
-
-	if err := stats.RenderSummary(os.Stdout, sessions); err != nil {
-		return fmt.Errorf("failed to render summary: %w", err)
-	}
-	if err := stats.RenderCurves(os.Stdout, sessions, cfg.CurveWindow); err != nil {
-		return fmt.Errorf("failed to render curves: %w", err)
-	}
-
-	windowIDs := lastSessionIDs(sessions, cfg.CurveWindow)
-	aggs, err := st.ListCharAggregatesForSessions(context.Background(), windowIDs)
-	if err != nil {
-		return fmt.Errorf("failed to load char stats: %w", err)
-	}
-	if err := stats.RenderCharTable(os.Stdout, aggs); err != nil {
-		return fmt.Errorf("failed to render character table: %w", err)
-	}
-
-	charsList := parseChars(cfg.Chars)
-	if len(charsList) > 0 {
-		perSession, err := st.ListCharStatsForSessions(context.Background(), sessionIDs(sessions), charsList)
-		if err != nil {
-			return fmt.Errorf("failed to load per-char session stats: %w", err)
-		}
-		if err := stats.RenderCharCurves(os.Stdout, sessions, perSession, charsList, cfg.CurveWindow); err != nil {
-			return fmt.Errorf("failed to render character curves: %w", err)
-		}
+	model := statsui.NewModel(st, cfg)
+	program := tea.NewProgram(model, tea.WithAltScreen())
+	if _, err := program.Run(); err != nil {
+		return fmt.Errorf("failed to run stats TUI: %w", err)
 	}
 	return nil
 }
@@ -510,7 +481,7 @@ func writeWordList(path string, words []string) error {
 	return nil
 }
 
-func applyStringConfig(cmd *cobra.Command, name string, target *string, value *string) {
+func applyStringConfig(cmd *cobra.Command, name string, target, value *string) {
 	if value == nil {
 		return
 	}
@@ -520,7 +491,7 @@ func applyStringConfig(cmd *cobra.Command, name string, target *string, value *s
 	*target = *value
 }
 
-func applyIntConfig(cmd *cobra.Command, name string, target *int, value *int) {
+func applyIntConfig(cmd *cobra.Command, name string, target, value *int) {
 	if value == nil {
 		return
 	}
@@ -530,7 +501,7 @@ func applyIntConfig(cmd *cobra.Command, name string, target *int, value *int) {
 	*target = *value
 }
 
-func applyFloatConfig(cmd *cobra.Command, name string, target *float64, value *float64) {
+func applyFloatConfig(cmd *cobra.Command, name string, target, value *float64) {
 	if value == nil {
 		return
 	}
@@ -540,7 +511,7 @@ func applyFloatConfig(cmd *cobra.Command, name string, target *float64, value *f
 	*target = *value
 }
 
-func applyBoolConfig(cmd *cobra.Command, name string, target *bool, value *bool) {
+func applyBoolConfig(cmd *cobra.Command, name string, target, value *bool) {
 	if value == nil {
 		return
 	}
@@ -629,43 +600,4 @@ func logErrln(args ...any) {
 		// Best-effort logging to stderr.
 		_ = err
 	}
-}
-
-func sessionIDs(sessions []model.SessionAggregate) []int64 {
-	ids := make([]int64, len(sessions))
-	for i, s := range sessions {
-		ids[i] = s.SessionID
-	}
-	return ids
-}
-
-func lastSessionIDs(sessions []model.SessionAggregate, window int) []int64 {
-	if window <= 0 || len(sessions) <= window {
-		return sessionIDs(sessions)
-	}
-	return sessionIDs(sessions[len(sessions)-window:])
-}
-
-func parseChars(input string) []string {
-	input = strings.TrimSpace(input)
-	if input == "" {
-		return nil
-	}
-	if strings.Contains(input, ",") {
-		parts := strings.Split(input, ",")
-		out := make([]string, 0, len(parts))
-		for _, p := range parts {
-			p = strings.TrimSpace(p)
-			if p == "" {
-				continue
-			}
-			out = append(out, p)
-		}
-		return out
-	}
-	out := make([]string, 0, len([]rune(input)))
-	for _, r := range input {
-		out = append(out, string(r))
-	}
-	return out
 }

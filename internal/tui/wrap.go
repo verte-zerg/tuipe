@@ -40,7 +40,7 @@ func buildStyledRunes(targetRunes, inputRunes []rune, cursorIndex int) []styledR
 			}
 		}
 		if i == cursorIndex && i >= len(inputRunes) {
-			style = style.Copy().Underline(true)
+			style = style.Underline(true)
 		}
 		out = append(out, styledRune{
 			s:       style.Render(string(displayed)),

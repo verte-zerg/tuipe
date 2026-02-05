@@ -6,6 +6,7 @@ Developer guide for tuipe.
 - `cmd/tuipe`: CLI entrypoint
 - `internal/tui`: Bubble Tea UI (rendering, input handling)
 - `internal/stats`: session stats, tables, and reports
+- `internal/statsui`: Bubble Tea stats UI
 - `internal/store`: SQLite schema and queries
 - `internal/generator`: text/word generation logic
 - `internal/wordfreq`: wordfreq wheel download + wordlist extraction
@@ -65,3 +66,4 @@ go test ./...
 ## Notes
 - The TUI uses Bubble Tea in full-screen mode and supports space input.
 - Weak-character focus relies on session stats stored in SQLite.
+- Practice and stats are separate TUIs with no in-app navigation between them.

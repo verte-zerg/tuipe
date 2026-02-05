@@ -6,7 +6,7 @@ A fast, minimal TUI typing trainer with weak-character focus and detailed stats.
 - Full-screen centered typing UI with cursor indicator
 - Caps and punctuation controls
 - Weak-character focus mode (`--focus-weak`)
-- SQLite-backed stats and CLI reporting
+- SQLite-backed stats and stats TUI
 - Wordlist generator powered by wordfreq (no Python required)
 
 ## Install
@@ -35,7 +35,7 @@ tuipe
 Commands:
 - `tuipe` — start practice
 - `tuipe wordlist` — generate wordlists
-- `tuipe stats` — show stats and learning curves
+- `tuipe stats` — stats TUI
 - `tuipe langs` — list downloaded wordlists
 - `tuipe config` — create/open config
 
@@ -46,13 +46,13 @@ tuipe
 
 Common flags:
 ```bash
-tuipe --lang en --words 50 --caps 0.2 --punct 0.3 --punct-set ".,?!"
+tuipe --lang en --words 25 --caps 0.2 --punct 0.3 --punct-set ".,?!"
 tuipe --focus-weak --weak-top 8 --weak-window 20 --weak-factor 2.0
 ```
 
 Practice flags (defaults):
 - `--lang en` — language code
-- `--words 50` — number of words per session
+- `--words 25` — number of words per session
 - `--caps 0.0` — probability of capitalized first letter
 - `--punct 0.0` — punctuation probability per word
 - `--punct-set ".,?!"` — punctuation characters
@@ -64,13 +64,15 @@ Practice flags (defaults):
 Stats:
 ```bash
 tuipe stats
-tuipe stats --last 20 --curve-window 10
-tuipe stats --char "asdfjkl;"
 ```
 
-Stats output:
-- Learning curves are rendered as full-width ASCII plots with per-series min/max labels.
-- Per-character table is aligned and shows accuracy, latency, and counts.
+Stats UI:
+- Full-screen TUI with sections: Overview, Char Table, Char Curves.
+- Navigation: `left/right` to change sections, `up/down`/`pgup`/`pgdn` to scroll, `q` to quit.
+- Settings: press `/` to edit settings (lang/since/last/curve window), `enter` to apply, `esc` to cancel.
+- Char curves: press `enter` in Char Curves to edit the character set (defaults to top 5 by frequency).
+- Char input: type characters (no commas). Spaces are ignored.
+- Curves are colorized (disable with `NO_COLOR=1`).
 
 Generate wordlists:
 ```bash
@@ -102,7 +104,7 @@ Example:
 ```toml
 [practice]
 lang = "en"
-words = 50
+words = 25
 caps = 0.2
 punct = 0.3
 punct-set = ".,?!"
@@ -114,7 +116,7 @@ weak-window = 20
 
 Config reference (`[practice]`):
 - `lang` (default `en`) — language code used for practice
-- `words` (default `50`) — number of words per session
+- `words` (default `25`) — number of words per session
 - `caps` (default `0.0`) — probability of capitalized first letter
 - `punct` (default `0.0`) — punctuation probability per word
 - `punct-set` (default `.,?!`) — punctuation characters
