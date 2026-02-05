@@ -1,0 +1,60 @@
+version: "2"
+
+run:
+  timeout: 3m
+  tests: true
+
+linters:
+  default: none
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - revive
+    - gocritic
+    - ineffassign
+    - unused
+    - unparam
+    - misspell
+    - errorlint
+    - nilerr
+    - prealloc
+    - copyloopvar
+    - nolintlint
+  settings:
+    errcheck:
+      check-type-assertions: true
+    revive:
+      rules:
+        - name: var-naming
+        - name: blank-imports
+        - name: context-as-argument
+        - name: time-naming
+        - name: errorf
+        - name: exported
+        - name: increment-decrement
+        - name: range
+        - name: receiver-naming
+    gocritic:
+      enabled-checks:
+        - boolExprSimplify
+        - commentedOutCode
+        - emptyStringTest
+        - nestingReduce
+        - paramTypeCombine
+        - redundantSprint
+        - typeUnparen
+        - whyNoLint
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/verte-zerg/tuipe
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
